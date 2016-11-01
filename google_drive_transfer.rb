@@ -18,26 +18,26 @@ class GoogleDriveTransfer
 
   private
 
-  def copy_collections(source:, target:)
+  def copy_collections(source:, target:, path: '')
     if source.respond_to?(:files)
       source.files.each do |file|
         if is_collection?(file)
-          p "CREATE collection name: #{file.name}"
+          p "CREATE collection name: #{path}#{file.name}/"
           created_collection = target.create_subcollection(file.name)
-          copy_collections(source: file, target: created_collection)
+          copy_collections(source: file, target: created_collection, path: "#{path}#{created_collection.title}/")
         else
-          transfer(file, target)
+          transfer(file, target, path)
         end
       end
     else
-      transfer(source, target)
+      transfer(source, target, path)
     end
   end
 
-  def transfer(file, collection)
+  def transfer(file, collection, path)
     return false unless is_file?(file)
     if file.available_content_types.empty?
-      p "Fail to transfer... #{file.title}"
+      p "Fail to transfer... #{path}#{file.title}"
       logger.error(file.title)
       return false
     end
@@ -45,10 +45,10 @@ class GoogleDriveTransfer
     begin
       file_path = "tmp/#{file.title}"
 
-      p "(from source) Downloading... #{file.title}"
+      p "(from source) Downloading... #{path}#{file.title}"
       file.download_to_file(file_path)
 
-      p "(to target) Uploading... #{file.title}"
+      p "(to target) Uploading... #{path}#{file.title}"
       upload_options = {
         content_type: file.available_content_types.first,
         convert: false
@@ -58,7 +58,7 @@ class GoogleDriveTransfer
       p "Cleaning..."
       File.delete file_path
     rescue Google::Apis::ClientError => e
-      p "Fail to transfer... #{file.title}"
+      p "Fail to transfer... #{path}#{file.title}"
       logger.error(file.title)
       return false
     end
