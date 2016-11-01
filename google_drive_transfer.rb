@@ -22,7 +22,7 @@ class GoogleDriveTransfer
     if source.respond_to?(:files)
       source.files.each do |file|
         if is_collection?(file)
-          p "CREATE collection name: #{path}#{file.name}/"
+          STDOUT.puts "CREATE collection name: #{path}#{file.name}/"
           created_collection = target.create_subcollection(file.name)
           copy_collections(source: file, target: created_collection, path: "#{path}#{created_collection.title}/")
         else
@@ -37,7 +37,7 @@ class GoogleDriveTransfer
   def transfer(file, collection, path)
     return false unless is_file?(file)
     if file.available_content_types.empty?
-      p "Fail to transfer... #{path}#{file.title}"
+      STDOUT.puts "Fail to transfer... #{path}#{file.title}"
       logger.error(file.title)
       return false
     end
@@ -45,20 +45,20 @@ class GoogleDriveTransfer
     begin
       file_path = "tmp/#{file.title}"
 
-      p "(from source) Downloading... #{path}#{file.title}"
+      STDOUT.puts "(from source) Downloading... #{path}#{file.title}"
       file.download_to_file(file_path)
 
-      p "(to target) Uploading... #{path}#{file.title}"
+      STDOUT.puts "(to target) Uploading... #{path}#{file.title}"
       upload_options = {
         content_type: file.available_content_types.first,
         convert: false
       }
       collection.upload_from_file(file_path, file.title, upload_options)
 
-      p "Cleaning..."
+      STDOUT.puts "Cleaning..."
       File.delete file_path
     rescue Google::Apis::ClientError => e
-      p "Fail to transfer... #{path}#{file.title}"
+      STDOUT.puts "Fail to transfer... #{path}#{file.title}"
       logger.error(file.title)
       return false
     end
@@ -74,21 +74,21 @@ class GoogleDriveTransfer
   end
 end
 
-p "======================"
-p "   Log in as source   "
-p "======================"
+STDOUT.puts "======================"
+STDOUT.puts "   Log in as source   "
+STDOUT.puts "======================"
 source_session = GoogleDrive::Session.from_config("config_source.json")
-p "======================"
-p "       Complete       "
-p "======================"
+STDOUT.puts "======================"
+STDOUT.puts "       Complete       "
+STDOUT.puts "======================"
 
 
-p "======================"
-p "   Log in as target   "
-p "======================"
+STDOUT.puts "======================"
+STDOUT.puts "   Log in as target   "
+STDOUT.puts "======================"
 target_session = GoogleDrive::Session.from_config("config_target.json")
-p "======================"
-p "       Complete       "
-p "======================"
+STDOUT.puts "======================"
+STDOUT.puts "       Complete       "
+STDOUT.puts "======================"
 
 GoogleDriveTransfer.new(source_session, target_session).execute!
