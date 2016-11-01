@@ -49,19 +49,19 @@ class GoogleDriveTransfer
     end
   end
 
-  def tmp_file_path(file)
-    "tmp/#{file.id}-#{convert_title(file.title)}"
+  def tmp_file_path(file, extension: '')
+    "tmp/#{file.id}-#{convert_title(file.title)}#{extension}"
   end
 
   def transfer_spreadsheet(file, collection, path)
     STDOUT.puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
-    file.export_as_file(tmp_file_path(file), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    file.export_as_file(tmp_file_path(file, extension: '.xlsx'))
 
     STDOUT.puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
-    collection.upload_from_file(tmp_file_path(file), convert_title(file.title), convert: true)
+    collection.upload_from_file(tmp_file_path(file, extension: '.xlsx'), convert_title(file.title))
 
     STDOUT.puts "Cleaning..."
-    File.delete tmp_file_path(file)
+    File.delete tmp_file_path(file, extension: '.xlsx')
     true
   end
 
@@ -102,6 +102,10 @@ class GoogleDriveTransfer
   rescue Google::Apis::ServerError => e
     sleep 60
     transfer(file, collection, path)
+  rescue Errno::ENOENT => e
+    STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
+    logger.error(convert_title(file.title))
+    return false
   end
 
   def is_collection?(file)
