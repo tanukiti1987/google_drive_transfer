@@ -16,15 +16,7 @@ class GoogleDriveTransfer
     source_root_collections = source_session.root_collection
     target_root_collections = target_session.root_collection
 
-    source_files = source_root_collections.files.select {|f| is_file_or_spreadsheet?(f) }
-    Parallel.each(source_files, in_thread: parallel_num) do |files|
-      copy_collections(source: files, target: target_root_collections)
-    end
-
-    source_collections = source_root_collections.files.select {|f| is_collection?(f) }
-    Parallel.each(source_collections, in_thread: parallel_num) do |collections|
-      copy_collections(source: collections, target: target_root_collections)
-    end
+    copy_collections(source: source_root_collections, target: target_root_collections)
   end
 
   private
@@ -35,14 +27,17 @@ class GoogleDriveTransfer
 
   def copy_collections(source:, target:, path: '')
     if source.respond_to?(:files)
-      source.files.each do |file|
-        if is_collection?(file)
-          STDOUT.puts "CREATE collection name: #{path}#{file.name}/"
-          created_collection = target.create_subcollection(file.name)
-          copy_collections(source: file, target: created_collection, path: "#{path}#{created_collection.title}/")
-        else
-          transfer(file, target, path)
-        end
+      source_files = source.files.select {|f| is_file_or_spreadsheet?(f) }
+      source_collections = source.files.select {|f| is_collection?(f) }
+
+      Parallel.each(source_files, in_thread: parallel_num) do |file|
+        transfer(file, target, path)
+      end
+
+      source_collections.each do |collection|
+        STDOUT.puts "CREATE collection name: #{path}#{collection.name}/"
+        created_collection = target.create_subcollection(collection.name)
+        copy_collections(source: collection, target: created_collection, path: "#{path}#{created_collection.title}/")
       end
     else
       transfer(source, target, path)
@@ -53,6 +48,7 @@ class GoogleDriveTransfer
     "tmp/#{file.id}-#{convert_title(file.title)}#{extension}"
   end
 
+  # Document, Presentation も同じような感じでいけそう
   def transfer_spreadsheet(file, collection, path)
     STDOUT.puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
     file.export_as_file(tmp_file_path(file, extension: '.xlsx'))
@@ -95,6 +91,7 @@ class GoogleDriveTransfer
     else
       transfer_file(file, collection, path)
     end
+  # ファイル消すようにする
   rescue Google::Apis::ClientError => e
     STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
     logger.error(convert_title(file.title))
