@@ -30,7 +30,7 @@ class GoogleDriveTransfer
       source_files = source.files.select {|f| is_file_or_spreadsheet?(f) }
       source_collections = source.files.select {|f| is_collection?(f) }
 
-      Parallel.each(source_files, in_thread: parallel_num) do |file|
+      Parallel.each(source_files, in_processes: parallel_num) do |file|
         transfer(file, target, path)
       end
 
