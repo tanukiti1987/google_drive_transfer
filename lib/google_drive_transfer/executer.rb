@@ -32,7 +32,7 @@ class GoogleDriveTransfer::Executer
       end
 
       source_collections.each do |collection|
-        STDOUT.puts "CREATE collection name: #{path}#{collection.name}/"
+        puts "CREATE collection name: #{path}#{collection.name}/"
         created_collection = target.create_subcollection(collection.name)
         copy_collections(source: collection, target: created_collection, path: "#{path}#{created_collection.title}/")
       end
@@ -46,13 +46,13 @@ class GoogleDriveTransfer::Executer
   end
 
   def transfer_spreadsheet(file, collection, path)
-    STDOUT.puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
+    puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
     file.export_as_file(tmp_file_path(file, extension: '.xlsx'))
 
-    STDOUT.puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
+    puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
     collection.upload_from_file(tmp_file_path(file, extension: '.xlsx'), convert_title(file.title))
 
-    STDOUT.puts "Cleaning..."
+    puts "Cleaning..."
     File.delete tmp_file_path(file, extension: '.xlsx')
     true
   end
@@ -65,12 +65,12 @@ class GoogleDriveTransfer::Executer
         begin
           FileUtils.touch(file_path)
           io = File.open(file_path, 'r+')
-          STDOUT.puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
+          puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
           file.export_to_io(io, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-          STDOUT.puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
+          puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
           collection.upload_from_io(io, convert_title(file.title), content_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', convert: true)
         ensure
-          STDOUT.puts "(to target) Uploaded!"
+          puts "(to target) Uploaded!"
           io.close
           File.delete file_path
         end
@@ -78,34 +78,34 @@ class GoogleDriveTransfer::Executer
         begin
           FileUtils.touch(file_path)
           io = File.open(file_path, 'r+')
-          STDOUT.puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
+          puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
           file.export_to_io(io, 'application/vnd.openxmlformats-officedocument.presentationml.presentation')
-          STDOUT.puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
+          puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
           collection.upload_from_io(io, convert_title(file.title), content_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', convert: true)
         ensure
-          STDOUT.puts "(to target) Uploaded!"
+          puts "(to target) Uploaded!"
           io.close
           File.delete file_path
         end
       else
-        STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
+        puts "Fail to transfer... #{path}#{convert_title(file.title)}"
         logger.error(convert_title(file.title))
         return false
       end
     else
       begin
         content_type = file.available_content_types.first
-        STDOUT.puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
+        puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
         file.download_to_file(file_path)
 
-        STDOUT.puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
+        puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
         upload_options = {
           content_type: content_type,
           convert: false,
         }
         collection.upload_from_file(file_path, convert_title(file.title), upload_options)
       ensure
-        STDOUT.puts "(to target) Uploaded!"
+        puts "(to target) Uploaded!"
         File.delete file_path
       end
     end
@@ -120,21 +120,21 @@ class GoogleDriveTransfer::Executer
       transfer_file(file, collection, path)
     end
   rescue Google::Apis::ClientError => e
-    STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
+    puts "Fail to transfer... #{path}#{convert_title(file.title)}"
     logger.error(convert_title(file.title))
     return false
   rescue Google::Apis::ServerError => e
-    STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-    STDOUT.puts "Retry after 1 minute"
+    puts "Fail to transfer... #{path}#{convert_title(file.title)}"
+    puts "Retry after 1 minute"
     sleep 60
     transfer(file, collection, path)
   rescue Errno::ECONNRESET => e
-    STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-    STDOUT.puts "Retry after 1 minute"
+    puts "Fail to transfer... #{path}#{convert_title(file.title)}"
+    puts "Retry after 1 minute"
     sleep 60
     transfer(file, collection, path)
   rescue Errno::ENOENT => e
-    STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
+    puts "Fail to transfer... #{path}#{convert_title(file.title)}"
     logger.error(convert_title(file.title))
     return false
   end

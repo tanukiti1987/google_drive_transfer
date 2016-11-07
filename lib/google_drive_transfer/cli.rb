@@ -18,17 +18,17 @@ module GoogleDriveTransfer
         FileUtils.touch('log')
       end
 
-      STDOUT.puts "Input your Google API client_id: "
+      puts "Input your Google API client_id: "
       client_id = STDIN.gets.strip
       if client_id.empty?
-        STDOUT.puts "Blank client_id... Quit settings."
+        puts "Blank client_id... Quit settings."
         return
       end
 
-      STDOUT.puts "Input your Google API client_secret: "
+      puts "Input your Google API client_secret: "
       client_secret = STDIN.gets.strip
       if client_secret.empty?
-        STDOUT.puts "Blank client_secret... Quit settings."
+        puts "Blank client_secret... Quit settings."
         return
       end
 

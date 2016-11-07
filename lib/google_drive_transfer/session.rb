@@ -6,13 +6,13 @@ class GoogleDriveTransfer::Session
   end
 
   def create
-    STDOUT.puts "======================"
-    STDOUT.puts "   Log in as #{key}   "
-    STDOUT.puts "======================"
+    puts "======================"
+    puts "   Log in as #{key}   "
+    puts "======================"
     session = GoogleDrive::Session.from_config("config_#{key}.json")
-    STDOUT.puts "======================"
-    STDOUT.puts "       Complete       "
-    STDOUT.puts "======================"
+    puts "======================"
+    puts "       Complete       "
+    puts "======================"
     session
   end
 end
