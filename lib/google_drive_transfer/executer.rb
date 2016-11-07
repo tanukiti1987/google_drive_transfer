@@ -1,12 +1,9 @@
-require "google_drive"
-require "parallel"
-
-class GoogleDriveTransfer
+class GoogleDriveTransfer::Executer
   DEFAULT_PARALLEL_NUM = 2
 
   attr_reader :source_session, :target_session, :logger
 
-  def initialize(source_session, target_session)
+  def initialize(source_session:, target_session:)
     @source_session = source_session
     @target_session = target_session
     @logger = Logger.new('log')
@@ -158,22 +155,3 @@ class GoogleDriveTransfer
     title.gsub('/', '-')
   end
 end
-
-STDOUT.puts "======================"
-STDOUT.puts "   Log in as source   "
-STDOUT.puts "======================"
-source_session = GoogleDrive::Session.from_config("config_source.json")
-STDOUT.puts "======================"
-STDOUT.puts "       Complete       "
-STDOUT.puts "======================"
-
-
-STDOUT.puts "======================"
-STDOUT.puts "   Log in as target   "
-STDOUT.puts "======================"
-target_session = GoogleDrive::Session.from_config("config_target.json")
-STDOUT.puts "======================"
-STDOUT.puts "       Complete       "
-STDOUT.puts "======================"
-
-GoogleDriveTransfer.new(source_session, target_session).execute!

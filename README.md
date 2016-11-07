@@ -14,7 +14,7 @@ You should remember `client_id` and `client_secret`.
 
 ```
 $ bundle install
-$ bundle exec rake setup
+$ bundle exec bin/google_drive_transfer setup
   Input your Google API client_id:
   #{YOUR_CLIENT_ID}
   Input your Google API client_secret:
@@ -24,7 +24,7 @@ $ bundle exec rake setup
 # Execution
 
 ```
-$ PARALLEL_NUM=4 ruby google_drive_transfer.rb
+$ PARALLEL_NUM=4 bundle exec bin/google_drive_transfer start
 ```
 
 The first login should be __transfer source__ google account,

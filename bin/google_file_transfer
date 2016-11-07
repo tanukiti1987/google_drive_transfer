@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'google_drive_transfer'
+
+GoogleDriveTransfer::CLI.start

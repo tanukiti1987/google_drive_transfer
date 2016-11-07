@@ -1,6 +1,4 @@
-# frozen_string_literal: true
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-gem "google_drive", "~> 2.1"
-gem "rake", "~> 11.3"
-gem "parallel", "~> 1.9"
+# Specify your gem's dependencies in google_drive_transfer.gemspec
+gemspec
