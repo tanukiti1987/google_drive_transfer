@@ -24,7 +24,7 @@ $ bundle exec rake setup
 # Execution
 
 ```
-$ ruby google_drive_transfer.rb
+$ PARALLEL_NUM=4 ruby google_drive_transfer.rb
 ```
 
 The first login should be __transfer source__ google account,
