@@ -48,7 +48,6 @@ class GoogleDriveTransfer
     "tmp/#{file.id}-#{convert_title(file.title)}#{extension}"
   end
 
-  # Document, Presentation も同じような感じでいけそう
   def transfer_spreadsheet(file, collection, path)
     STDOUT.puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
     file.export_as_file(tmp_file_path(file, extension: '.xlsx'))
@@ -62,25 +61,57 @@ class GoogleDriveTransfer
   end
 
   def transfer_file(file, collection, path)
+    file_path = tmp_file_path(file)
     if file.available_content_types.empty?
-      STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-      logger.error(convert_title(file.title))
-      return false
+      case file.mime_type
+      when 'application/vnd.google-apps.document'
+        begin
+          FileUtils.touch(file_path)
+          io = File.open(file_path, 'r+')
+          STDOUT.puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
+          file.export_to_io(io, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+          STDOUT.puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
+          collection.upload_from_io(io, convert_title(file.title), content_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', convert: true)
+        ensure
+          STDOUT.puts "(to target) Uploaded!"
+          io.close
+          File.delete file_path
+        end
+      when 'application/vnd.google-apps.presentation'
+        begin
+          FileUtils.touch(file_path)
+          io = File.open(file_path, 'r+')
+          STDOUT.puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
+          file.export_to_io(io, 'application/vnd.openxmlformats-officedocument.presentationml.presentation')
+          STDOUT.puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
+          collection.upload_from_io(io, convert_title(file.title), content_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', convert: true)
+        ensure
+          STDOUT.puts "(to target) Uploaded!"
+          io.close
+          File.delete file_path
+        end
+      else
+        STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
+        logger.error(convert_title(file.title))
+        return false
+      end
+    else
+      begin
+        content_type = file.available_content_types.first
+        STDOUT.puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
+        file.download_to_file(file_path)
+
+        STDOUT.puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
+        upload_options = {
+          content_type: content_type,
+          convert: false,
+        }
+        collection.upload_from_file(file_path, convert_title(file.title), upload_options)
+      ensure
+        STDOUT.puts "(to target) Uploaded!"
+        File.delete file_path
+      end
     end
-
-    STDOUT.puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
-    file.download_to_file(tmp_file_path(file))
-
-    STDOUT.puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
-    upload_options = {
-      content_type: file.available_content_types.first,
-      convert: false
-    }
-    collection.upload_from_file(tmp_file_path(file), convert_title(file.title), upload_options)
-
-    STDOUT.puts "Cleaning..."
-    File.delete tmp_file_path(file)
-    true
   end
 
   def transfer(file, collection, path)
