@@ -91,12 +91,18 @@ class GoogleDriveTransfer
     else
       transfer_file(file, collection, path)
     end
-  # ファイル消すようにする
   rescue Google::Apis::ClientError => e
     STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
     logger.error(convert_title(file.title))
     return false
   rescue Google::Apis::ServerError => e
+    STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
+    STDOUT.puts "Retry after 1 minute"
+    sleep 60
+    transfer(file, collection, path)
+  rescue Errno::ECONNRESET => e
+    STDOUT.puts "Fail to transfer... #{path}#{convert_title(file.title)}"
+    STDOUT.puts "Retry after 1 minute"
     sleep 60
     transfer(file, collection, path)
   rescue Errno::ENOENT => e
