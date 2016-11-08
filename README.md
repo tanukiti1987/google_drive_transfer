@@ -30,6 +30,10 @@ $ PARALLEL_NUM=4 bundle exec bin/google_drive_transfer start
 The first login should be __transfer source__ google account,
 second login should be __transfer target__ google account.
 
+## Error log
+
+Files that fail to transfer will be recorded in the error log on `./log`
+
 # Licence
 
 [MIT License](https://github.com/tanukiti1987/google_drive_transfer/blob/master/LICENSE.txt)
