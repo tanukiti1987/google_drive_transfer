@@ -102,8 +102,7 @@ class GoogleDriveTransfer::Executer
           File.delete file_path
         end
       else
-        puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-        logger.error("#{path}#{convert_title(file.title)}")
+        failure_message("#{path}#{convert_title(file.title)}", with_log: true)
         return false
       end
     else
@@ -138,31 +137,32 @@ class GoogleDriveTransfer::Executer
     end
     reset_backoff
   rescue Google::Apis::ClientError => e
-    puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-    logger.error("#{path}#{convert_title(file.title)}")
+    failure_message("#{path}#{convert_title(file.title)}", with_log: true)
     return false
   rescue Google::Apis::ServerError => e
-    wating_time = extend_backoff_time
-    puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-    puts "Retry after #{wating_time} second(s)."
-    sleep wating_time
-    transfer(file, collection, path)
+    failure_message("#{path}#{convert_title(file.title)}")
+    retry_transfer_with_waiting(file, collection, path)
   rescue Google::Apis::RateLimitError => e
-    wating_time = extend_backoff_time
-    puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-    puts "Retry after #{wating_time} second(s)."
-    sleep wating_time
-    transfer(file, collection, path)
+    failure_message("#{path}#{convert_title(file.title)}")
+    retry_transfer_with_waiting(file, collection, path)
   rescue Errno::ECONNRESET => e
+    failure_message("#{path}#{convert_title(file.title)}")
+    retry_transfer_with_waiting(file, collection, path)
+  rescue Errno::ENOENT => e
+    failure_message("#{path}#{convert_title(file.title)}", with_log: true)
+    return false
+  end
+
+  def failure_message(file_path, with_log: false)
+    puts "Fail to transfer... #{file_path}"
+    logger.error("#{file_path}") if with_log
+  end
+
+  def retry_transfer_with_waiting(file, collection, path)
     wating_time = extend_backoff_time
-    puts "Fail to transfer... #{path}#{convert_title(file.title)}"
     puts "Retry after #{wating_time} second(s)."
     sleep wating_time
     transfer(file, collection, path)
-  rescue Errno::ENOENT => e
-    puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-    logger.error("#{path}#{convert_title(file.title)}")
-    return false
   end
 
   def is_collection?(file)
