@@ -124,6 +124,7 @@ class GoogleDriveTransfer::Executer
     else
       transfer_file(file, collection, path)
     end
+    reset_backoff
   rescue Google::Apis::ClientError => e
     puts "Fail to transfer... #{path}#{convert_title(file.title)}"
     logger.error("#{path}#{convert_title(file.title)}")
