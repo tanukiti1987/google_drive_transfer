@@ -55,7 +55,10 @@ class GoogleDriveTransfer::Executer
     file.export_as_file(tmp_file_path(file, extension: '.xlsx'))
 
     puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
-    collection.upload_from_file(tmp_file_path(file, extension: '.xlsx'), convert_title(file.title))
+    uploaded_file = collection.upload_from_file(tmp_file_path(file, extension: '.xlsx'), convert_title(file.title))
+    if file.trashed?
+      uploaded_file.delete
+    end
 
     puts "Cleaning..."
     File.delete tmp_file_path(file, extension: '.xlsx')
@@ -73,7 +76,10 @@ class GoogleDriveTransfer::Executer
           puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
           file.export_to_io(io, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
           puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
-          collection.upload_from_io(io, convert_title(file.title), content_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', convert: true)
+          uploaded_file = collection.upload_from_io(io, convert_title(file.title), content_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', convert: true)
+          if file.trashed?
+            uploaded_file.delete
+          end
         ensure
           puts "(to target) Uploaded!"
           io.close
@@ -86,7 +92,10 @@ class GoogleDriveTransfer::Executer
           puts "(from source) Downloading... #{path}#{convert_title(file.title)}"
           file.export_to_io(io, 'application/vnd.openxmlformats-officedocument.presentationml.presentation')
           puts "(to target) Uploading... #{path}#{convert_title(file.title)}"
-          collection.upload_from_io(io, convert_title(file.title), content_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', convert: true)
+          uploaded_file = collection.upload_from_io(io, convert_title(file.title), content_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', convert: true)
+          if file.trashed?
+            uploaded_file.delete
+          end
         ensure
           puts "(to target) Uploaded!"
           io.close
@@ -108,7 +117,10 @@ class GoogleDriveTransfer::Executer
           content_type: content_type,
           convert: false,
         }
-        collection.upload_from_file(file_path, convert_title(file.title), upload_options)
+        uploaded_file = collection.upload_from_file(file_path, convert_title(file.title), upload_options)
+        if file.trashed?
+          uploaded_file.delete
+        end
       ensure
         puts "(to target) Uploaded!"
         File.delete file_path
