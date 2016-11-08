@@ -34,6 +34,8 @@ class GoogleDriveTransfer::Executer
       end
 
       source_collections.each do |collection|
+        next if GoogleDriveTransfer::Strategy.skip_collections?(collection.name)
+
         puts "CREATE collection name: #{path}#{collection.name}/"
         created_collection = target.create_subcollection(collection.name)
         copy_collections(source: collection, target: created_collection, path: "#{path}#{created_collection.title}/")
