@@ -1,3 +1,5 @@
+require "parallel"
+
 class GoogleDriveTransfer::Executer
   DEFAULT_PARALLEL_NUM = 2
 
