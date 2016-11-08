@@ -30,6 +30,11 @@ $ PARALLEL_NUM=4 bundle exec bin/google_drive_transfer start
 The first login should be __transfer source__ google account,
 second login should be __transfer target__ google account.
 
+## Transfer strategy
+
+If you would like to skip some folders to transfer,
+you can define folders name at `transfer_strategy.yml`.
+
 ## Error log
 
 Files that fail to transfer will be recorded in the error log on `./log`

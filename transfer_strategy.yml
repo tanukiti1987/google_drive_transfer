@@ -1,3 +1,3 @@
-skip_collections:
+skip_collections: # collection is the same meaning of `folder`
   - something
   - something
