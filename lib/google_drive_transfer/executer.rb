@@ -89,7 +89,7 @@ class GoogleDriveTransfer::Executer
         end
       else
         puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-        logger.error(convert_title(file.title))
+        logger.error("#{path}#{convert_title(file.title)}")
         return false
       end
     else
@@ -121,7 +121,7 @@ class GoogleDriveTransfer::Executer
     end
   rescue Google::Apis::ClientError => e
     puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-    logger.error(convert_title(file.title))
+    logger.error("#{path}#{convert_title(file.title)}")
     return false
   rescue Google::Apis::ServerError => e
     puts "Fail to transfer... #{path}#{convert_title(file.title)}"
@@ -135,7 +135,7 @@ class GoogleDriveTransfer::Executer
     transfer(file, collection, path)
   rescue Errno::ENOENT => e
     puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-    logger.error(convert_title(file.title))
+    logger.error("#{path}#{convert_title(file.title)}")
     return false
   end
 
