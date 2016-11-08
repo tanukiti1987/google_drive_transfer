@@ -9,6 +9,7 @@ class GoogleDriveTransfer::Executer
     @source_session = source_session
     @target_session = target_session
     @logger = Logger.new('log')
+    @backoff_time = 0
   end
 
   def execute!
@@ -128,14 +129,22 @@ class GoogleDriveTransfer::Executer
     logger.error("#{path}#{convert_title(file.title)}")
     return false
   rescue Google::Apis::ServerError => e
+    wating_time = extend_backoff_time
     puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-    puts "Retry after 1 minute"
-    sleep 60
+    puts "Retry after #{wating_time} second(s)."
+    sleep wating_time
+    transfer(file, collection, path)
+  rescue Google::Apis::RateLimitError => e
+    wating_time = extend_backoff_time
+    puts "Fail to transfer... #{path}#{convert_title(file.title)}"
+    puts "Retry after #{wating_time} second(s)."
+    sleep wating_time
     transfer(file, collection, path)
   rescue Errno::ECONNRESET => e
+    wating_time = extend_backoff_time
     puts "Fail to transfer... #{path}#{convert_title(file.title)}"
-    puts "Retry after 1 minute"
-    sleep 60
+    puts "Retry after #{wating_time} second(s)."
+    sleep wating_time
     transfer(file, collection, path)
   rescue Errno::ENOENT => e
     puts "Fail to transfer... #{path}#{convert_title(file.title)}"
@@ -157,5 +166,17 @@ class GoogleDriveTransfer::Executer
 
   def convert_title(title)
     title.gsub('/', '-')
+  end
+
+  def extend_backoff_time
+    if @backoff_time != 0
+      @backoff_time = @backoff_time * 2
+    else
+      @backoff_time = 1
+    end
+  end
+
+  def reset_backoff
+    @backoff_time = 0
   end
 end
