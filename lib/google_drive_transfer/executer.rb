@@ -27,8 +27,12 @@ class GoogleDriveTransfer::Executer
 
   def copy_collections(source:, target:, path: '')
     if source.respond_to?(:files)
-      source_files = source.files.select {|f| is_file_or_spreadsheet?(f) }
-      source_collections = source.files.select {|f| is_collection?(f) }
+      all_files = []
+      source.files do |f|
+        all_files << f
+      end
+      source_files = all_files.select {|f| is_file_or_spreadsheet?(f) }
+      source_collections = all_files.select {|f| is_collection?(f) }
 
       Parallel.each(source_files, in_processes: parallel_num) do |file|
         transfer(file, target, path)
