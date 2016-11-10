@@ -27,12 +27,17 @@ class GoogleDriveTransfer::Executer
 
   def copy_collections(source:, target:, path: '')
     if source.respond_to?(:files)
-      all_files = []
+      all_source_files = []
       source.files do |f|
-        all_files << f
+        all_source_files << f unless f.trashed?
       end
-      source_files = all_files.select {|f| is_file_or_spreadsheet?(f) }
-      source_collections = all_files.select {|f| is_collection?(f) }
+      all_target_files = []
+      target.files do |f|
+        all_target_files << f unless f.trashed?
+      end
+
+      source_files = all_source_files.select {|f| is_file_or_spreadsheet?(f) }
+      source_collections = all_source_files.select {|f| is_collection?(f) }
 
       Parallel.each(source_files, in_processes: parallel_num) do |file|
         transfer(file, target, path)
@@ -41,9 +46,14 @@ class GoogleDriveTransfer::Executer
       source_collections.each do |collection|
         next if GoogleDriveTransfer::Strategy.skip_collections?(collection.name)
 
-        puts "CREATE collection name: #{path}#{collection.name}/"
-        created_collection = target.create_subcollection(collection.name)
-        copy_collections(source: collection, target: created_collection, path: "#{path}#{created_collection.title}/")
+        existed_collection = all_target_files.select {|f| !f.trashed? }.select {|f| f.title == collection.name }.first
+        if existed_collection.nil?
+          puts "CREATE collection name: #{path}#{collection.name}/"
+          created_collection = target.create_subcollection(collection.name)
+          copy_collections(source: collection, target: created_collection, path: "#{path}#{created_collection.title}/")
+        else
+          copy_collections(source: collection, target: existed_collection, path: "#{path}#{existed_collection.title}/")
+        end
       end
     else
       transfer(source, target, path)
@@ -131,8 +141,21 @@ class GoogleDriveTransfer::Executer
     end
   end
 
+  def is_exists?(file, collection)
+    all_files = []
+    collection.files do |f|
+      all_files << f unless f.trashed?
+    end
+
+    all_files.select {|f| !f.trashed? }.any? {|f| f.title == convert_title(file.title) }
+  end
+
   def transfer(file, collection, path)
     return false if is_collection?(file)
+    if is_exists?(file, collection)
+      logger.info("#{path}#{file.title}")
+      return false
+    end
 
     if is_spreadsheet?(file)
       transfer_spreadsheet(file, collection, path)
