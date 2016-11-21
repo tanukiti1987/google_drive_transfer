@@ -74,6 +74,7 @@ class GoogleDriveTransfer::Executer
       uploaded_file.delete
     end
 
+    append_correspondence_table(file.id, uploaded_file.id)
     puts "Cleaning..."
     File.delete tmp_file_path(file, extension: '.xlsx')
     true
@@ -94,6 +95,8 @@ class GoogleDriveTransfer::Executer
           if file.trashed?
             uploaded_file.delete
           end
+
+          append_correspondence_table(file.id, uploaded_file.id)
         ensure
           puts "(to target) Uploaded!"
           io.close
@@ -110,6 +113,8 @@ class GoogleDriveTransfer::Executer
           if file.trashed?
             uploaded_file.delete
           end
+
+          append_correspondence_table(file.id, uploaded_file.id)
         ensure
           puts "(to target) Uploaded!"
           io.close
@@ -134,10 +139,18 @@ class GoogleDriveTransfer::Executer
         if file.trashed?
           uploaded_file.delete
         end
+
+        append_correspondence_table(file.id, uploaded_file.id)
       ensure
         puts "(to target) Uploaded!"
         File.delete file_path
       end
+    end
+  end
+
+  def append_correspondence_table(old_file_id, new_file_id)
+    File.open('correspondence_table.txt', 'a') do |f|
+      f.puts "#{old_file_id},#{new_file_id}"
     end
   end
 

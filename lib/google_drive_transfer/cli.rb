@@ -18,6 +18,10 @@ module GoogleDriveTransfer
         FileUtils.touch('log')
       end
 
+      unless File.exist?('correspondence_table.txt')
+        FileUtils.touch('correspondence_table.txt')
+      end
+
       puts "Input your Google API client_id: "
       client_id = STDIN.gets.strip
       if client_id.empty?
